@@ -10,6 +10,7 @@ variable instance_type {}
 variable ssh_key {}
 variable my_ip {}
 variable ssh_key_private {}
+variable environment {}
 
 data "aws_ami" "amazon-linux-image" {
   most_recent = true
@@ -110,12 +111,15 @@ resource "aws_key_pair" "ssh-key" {
 output "server-ip-one" {
     value = aws_instance.myapp-server-one.public_ip
 }
+
 output "server-ip-two" {
     value = aws_instance.myapp-server-two.public_ip
 }
+/*
 output "server-ip-three" {
     value = aws_instance.myapp-server-three.public_ip
 }
+*/
 
 resource "aws_instance" "myapp-server-one" {
   ami                         = data.aws_ami.amazon-linux-image.id
@@ -150,6 +154,7 @@ resource "aws_instance" "myapp-server-two" {
   } */
 }
 
+/*
 resource "aws_instance" "myapp-server-three" {
   ami                         = data.aws_ami.amazon-linux-image.id
   instance_type               = var.instance_type
@@ -164,6 +169,7 @@ resource "aws_instance" "myapp-server-three" {
   }
 
 }
+*/
 
 /* 
 resource "null_resource" "configure_server" {
