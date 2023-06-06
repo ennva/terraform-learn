@@ -1,11 +1,12 @@
 variable vpc_cidr_block {}
 variable env_prefix {}
+variable instance_type {}
 
 /*
 variable subnet_1_cidr_block {}
 variable avail_zone {}
 
-variable instance_type {}
+
 variable ssh_key {}
 variable my_ip {}
 variable ssh_key_private {}

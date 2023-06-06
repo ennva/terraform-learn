@@ -1,6 +1,6 @@
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "19.15.1"
+  version = "19.15.2"
 
   cluster_name = "myapp-eks-cluster"
   cluster_version = "1.27"
@@ -15,7 +15,7 @@ module "eks" {
       max_size     = 3
       desired_size = 2
 
-      instance_types = ["t2.micro"]
+      instance_types = [var.instance_type]
     }
   }
 
