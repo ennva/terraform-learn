@@ -1,9 +1,9 @@
 provider "aws" {
-  region = "eu-west-3"
+  region = "eu-central-1"
 }
 
 variable vpc_cidr_block {}
-variable subnet_1_cidr_block {}
+variable subnet_cidr_block {}
 variable avail_zone {}
 variable env_prefix {}
 variable instance_type {}
@@ -17,7 +17,9 @@ data "aws_ami" "amazon-linux-image" {
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    #values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["al2023-ami-2023*-x86_64"]
+    #values = ["amzn2-ami-kernel-*-arm64-gp2"]
   }
 
   filter {
@@ -40,7 +42,7 @@ resource "aws_vpc" "myapp-vpc" {
 
 resource "aws_subnet" "myapp-subnet-1" {
   vpc_id = aws_vpc.myapp-vpc.id
-  cidr_block = var.subnet_1_cidr_block
+  cidr_block = var.subnet_cidr_block
   availability_zone = var.avail_zone
   tags = {
       Name = "${var.env_prefix}-subnet-1"
@@ -105,11 +107,17 @@ resource "aws_key_pair" "ssh-key" {
   public_key = file(var.ssh_key)
 }
 
-output "server-ip" {
-    value = aws_instance.myapp-server.public_ip
+output "server-ip-one" {
+    value = aws_instance.myapp-server-one.public_ip
+}
+output "server-ip-two" {
+    value = aws_instance.myapp-server-two.public_ip
+}
+output "server-ip-three" {
+    value = aws_instance.myapp-server-three.public_ip
 }
 
-resource "aws_instance" "myapp-server" {
+resource "aws_instance" "myapp-server-one" {
   ami                         = data.aws_ami.amazon-linux-image.id
   instance_type               = var.instance_type
   key_name                    = "myapp-key"
@@ -119,7 +127,7 @@ resource "aws_instance" "myapp-server" {
   availability_zone			      = var.avail_zone
 
   tags = {
-    Name = "${var.env_prefix}-server"
+    Name = "${var.env_prefix}-server-one"
   }
 }
 
@@ -133,13 +141,28 @@ resource "aws_instance" "myapp-server-two" {
   availability_zone			      = var.avail_zone
 
   tags = {
-    Name = "${var.env_prefix}-server"
+    Name = "${var.env_prefix}-server-two"
   }
 
   /* provisioner "local-exec" {
     working_dir = "../ansible"
     command = "ansible-playbook --inventory ${self.public_ip}, --private-key ${var.ssh_key_private} --user ec2-user deploy-docker-new-user.yaml"
   } */
+}
+
+resource "aws_instance" "myapp-server-three" {
+  ami                         = data.aws_ami.amazon-linux-image.id
+  instance_type               = var.instance_type
+  key_name                    = "myapp-key"
+  associate_public_ip_address = true
+  subnet_id                   = aws_subnet.myapp-subnet-1.id
+  vpc_security_group_ids      = [aws_security_group.myapp-sg.id]
+  availability_zone			      = var.avail_zone
+
+  tags = {
+    Name = "${var.env_prefix}-server-three"
+  }
+
 }
 
 /* 
