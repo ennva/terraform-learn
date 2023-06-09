@@ -60,6 +60,7 @@ variable private_key_location {}
 resource "aws_vpc" "app-vpc" {
     #cidr_block = "10.0.0.0/16"
     cidr_block = var.cidr_blocks[0].cidr_block
+    enable_dns_hostnames = true
     tags = {
         #Name: "development-vpc"
         #vpc_env: "dev"
@@ -195,9 +196,18 @@ resource "aws_instance" "app-server" {
     availability_zone = var.avail_zone
     
     associate_public_ip_address = true
-    
+
     key_name = aws_key_pair.ssh-key.key_name
     
+    ## Configure with ansible
+    /*
+    provisioner "local-exec" {
+      working_dir = "/home/osboxes/PROJECTS/ansible-learn"
+      command = "ansible-playbook --inventory ${self.public_ip}, --private-key ${var.private_key_location} --user ec2-user deploy-docker-new-user.yaml"
+    }
+    */
+    
+    /*
     connection {
        	type     = "ssh"
       	user     = "ec2-user"
@@ -209,32 +219,58 @@ resource "aws_instance" "app-server" {
     	source = "entry-script.sh"
     	destination = "/home/ec2-user/entry-script-on-ec2.sh"
     }
+    */
     
     ### user_data
     #user_data = "${file("entry-script.sh")}"
     ### or
-    provisioner "remote-exec" {
-    	script = "${file("entry-script.sh")}"
-    	/*
-    	inline = [
-    		"export ENV=dev",
-    		"mkdir newdir"
-    	]
-    	*/
-    }
-    
-    provisioner "local-exec" {
-    	command = "echo ${self.public_ip}"
-    }
+    #provisioner "remote-exec" {
+    #	script = "${file("entry-script.sh")}"
+    	#inline = [
+    	#	"export ENV=dev",
+    	#	"mkdir newdir"
+    	#]
+    #	
+    #}
     
     tags = {
     	Name = "${var.env_prefix}-server"
     }
 }
 
+resource "aws_instance" "app-server-2" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+    
+    subnet_id = aws_subnet.app-subnet-1.id
+    vpc_security_group_ids = [aws_default_security_group.app-default-sg.id]
+    availability_zone = var.avail_zone
+    
+    associate_public_ip_address = true
+
+    key_name = aws_key_pair.ssh-key.key_name
+    
+    tags = {
+    	Name = "prod-server"
+    }
+}
+
 output "ec2_public_ip" {
     value = aws_instance.app-server.public_ip
 }
+
+## To only execute ansible tasks without provisioning
+/*
+resource "null_resource" "configure_server" {
+  triggers = {
+    trigger = aws_instance.app-server.public_ip
+  }
+  provisioner "local-exec" {
+    working_dir = "../ansible-learn"
+    command = "ansible-playbook --inventory ${aws_instance.app-server.public_ip}, --private-key ${var.private_key_location} --user ec2-user deploy-docker-new-user.yaml"
+  }
+}
+*/
 
 /*
 ## add this component only of you want add resource to an existing one
